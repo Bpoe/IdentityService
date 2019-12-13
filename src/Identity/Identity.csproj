@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- RuntimeIdentifier>win-x64</RuntimeIdentifier -->
     <SelfContained>false</SelfContained>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
     <UserSecretsId>IdentityService</UserSecretsId>

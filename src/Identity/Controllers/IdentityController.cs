@@ -4,7 +4,7 @@
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Options;
     using Microsoft.IdentityModel.Clients.ActiveDirectory;
     using Models;
 
@@ -14,27 +14,23 @@
     {
         private static DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        private IConfiguration configuration;
+        private IOptions<MsiOptions> options;
 
-        public TokenController(IConfiguration configuration)
+        public TokenController(IOptions<MsiOptions> options)
         {
-            this.configuration = configuration;
+            if (options?.Value == null) throw new ArgumentNullException(nameof(options));
+
+            this.options = options;
         }
 
         [HttpGet]
         public async Task<ActionResult<TokenResponse>> Token(string resource)
         {
-            var authority = this.configuration.GetValue<string>("MSI:Authority");
-            var tenantId = this.configuration.GetValue<string>("MSI:TenantId");
-            var clientId = this.configuration.GetValue<string>("MSI:ClientId");
-            var clientSecret = this.configuration.GetValue<string>("MSI:ClientSecret");
-            var clientCertificateCriteria = this.configuration.GetValue<string>("MSI:ClientCertificateCriteria");
-
-            var tenantAuthority = $"{authority}{tenantId}";
+            var tenantAuthority = $"{this.options.Value.Authority}{this.options.Value.TenantId}";
 
             //X509Certificate2 cert = null;
-            //var clientAssert = new ClientAssertionCertificate(this.clientId, cert);
-            var credential = new ClientCredential(clientId, clientSecret);
+            //var clientAssert = new ClientAssertionCertificate(this.msiOptions.Value.ClientId, cert);
+            var credential = new ClientCredential(this.options.Value.ClientId, this.options.Value.ClientSecret);
             var authContext = new AuthenticationContext(tenantAuthority);
             var result = await authContext.AcquireTokenAsync(resource, credential);
 
