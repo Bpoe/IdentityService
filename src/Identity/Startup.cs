@@ -1,18 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-
-namespace Identity
+﻿namespace Identity
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.HttpsPolicy;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
+    using Infrastructure;
+    using Interfaces;
+    using Microsoft.Identity.Client;
+
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -26,7 +30,22 @@ namespace Identity
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddOptions();
-            services.Configure<MsiOptions>(this.Configuration.GetSection("MSI"));
+            services.Configure<ConfidentialClientApplicationOptions>(this.Configuration.GetSection("Identity"));
+            services.Configure<CertificateOptions>(this.Configuration.GetSection("Certificate"));
+
+            var provider = services.BuildServiceProvider();
+            var options = provider.GetService<IOptions<ConfidentialClientApplicationOptions>>();
+            var certificateOptions = provider.GetService<IOptions<CertificateOptions>>();
+
+            var certificateProvider = new CertificateProvider(certificateOptions.Value.StoreName, certificateOptions.Value.StoreLocation);
+            var certificate = certificateProvider.FindCertificate(certificateOptions.Value.Thumbprint);
+
+            var app = ConfidentialClientApplicationBuilder
+                .CreateWithApplicationOptions(options.Value)
+                .WithCertificate(certificate)
+                .Build();
+
+            services.AddSingleton(app);
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }

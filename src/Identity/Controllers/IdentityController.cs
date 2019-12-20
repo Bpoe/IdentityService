@@ -1,48 +1,41 @@
 ﻿namespace Identity.Controllers
 {
     using System;
-    using System.Security.Cryptography.X509Certificates;
+    using System.ComponentModel.DataAnnotations;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Options;
-    using Microsoft.IdentityModel.Clients.ActiveDirectory;
+    using Microsoft.Identity.Client;
     using Models;
 
     [Route("metadata/identity/oauth2/token")]
     [ApiController]
     public class TokenController : ControllerBase
     {
-        private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        private const string BearerTokenType = "Bearer";
+        private const string DefaultForScope = "/.default";
 
-        private readonly IOptions<MsiOptions> options;
+        private readonly IConfidentialClientApplication clientApplication;
 
-        public TokenController(IOptions<MsiOptions> options)
+        public TokenController(IConfidentialClientApplication clientApplication)
         {
-            if (options?.Value == null) throw new ArgumentNullException(nameof(options));
-
-            this.options = options;
+            this.clientApplication = clientApplication ?? throw new ArgumentNullException(nameof(clientApplication));
         }
 
         [HttpGet]
-        public async Task<ActionResult<TokenResponse>> Token(string resource)
+        public async Task<ActionResult<TokenResponse>> Token([Required]string resource)
         {
-            var tenantAuthority = $"{this.options.Value.Authority}{this.options.Value.TenantId}";
-
-            //X509Certificate2 cert = null;
-            //var clientAssert = new ClientAssertionCertificate(this.msiOptions.Value.ClientId, cert);
-            var credential = new ClientCredential(this.options.Value.ClientId, this.options.Value.ClientSecret);
-            var authContext = new AuthenticationContext(tenantAuthority);
-            var result = await authContext.AcquireTokenAsync(resource, credential);
+            var scope = new string[] { resource + DefaultForScope };
+            var result = await this.clientApplication.AcquireTokenForClient(scope).ExecuteAsync();
 
             var tokenResponse = new TokenResponse()
             {
                 AccessToken = result.AccessToken,
-                TokenType = result.AccessTokenType,
-                ExpiresOn = (result.ExpiresOn - Epoch).ToSecondsString(),
+                TokenType = BearerTokenType,
+                ExpiresOn = (result.ExpiresOn - Epoch.DateTime).ToSecondsString(),
                 ExpiresIn = (result.ExpiresOn - DateTime.UtcNow).ToSecondsString(),
-                NotBefore = (DateTime.UtcNow - Epoch).ToSecondsString(),
+                NotBefore = (DateTime.UtcNow - Epoch.DateTime).ToSecondsString(),
                 Resource = resource,
-                RefreshToken = string.Empty,
+                ClientId = this.clientApplication.AppConfig.ClientId,
             };
 
             return tokenResponse;
