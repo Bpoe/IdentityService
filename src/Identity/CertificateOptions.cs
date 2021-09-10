@@ -4,7 +4,7 @@
 
     public class CertificateOptions
     {
-        public string Thumbprint { get; set; }
+        public string Criteria { get; set; }
 
         public StoreName StoreName { get; set; }
 

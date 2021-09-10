@@ -7,8 +7,6 @@
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Hosting.WindowsServices;
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.Logging;
 
     public class Program
     {
@@ -40,10 +38,9 @@
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args)
         {
-            var hostBuilder = WebHost.CreateDefaultBuilder(args)
+            return WebHost
+                .CreateDefaultBuilder(args)
                 .UseStartup<Startup>();
-
-            return hostBuilder;
         }
     }
 }

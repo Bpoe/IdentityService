@@ -1,62 +1,72 @@
 ﻿namespace Identity
 {
+    using Identity.Infrastructure;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
-    using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Options;
-    using Infrastructure;
     using Microsoft.Identity.Client;
-
+    
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
-            Configuration = configuration;
+            this.Configuration = configuration;
+            this.Environment = env;
         }
 
         public IConfiguration Configuration { get; }
 
+        public IWebHostEnvironment Environment { get; }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddOptions();
-            services.Configure<ConfidentialClientApplicationOptions>(this.Configuration.GetSection("Identity"));
-            services.Configure<CertificateOptions>(this.Configuration.GetSection("Certificate"));
+            services
+                .AddControllers()
+                .AddNewtonsoftJson();
 
-            var provider = services.BuildServiceProvider();
-            var options = provider.GetService<IOptions<ConfidentialClientApplicationOptions>>();
-            var certificateOptions = provider.GetService<IOptions<CertificateOptions>>();
+            services
+                .AddOptions()
+                .Configure<ConfidentialClientApplicationOptions>(this.Configuration.GetSection("Identity"))
+                .Configure<CertificateOptions>(this.Configuration.GetSection("Certificate"));
 
-            var certificateProvider = new CertificateProvider(certificateOptions.Value.StoreName, certificateOptions.Value.StoreLocation);
-            var certificate = certificateProvider.FindCertificate(certificateOptions.Value.Thumbprint);
+            services.AddSingleton(s =>
+            {
+                var options = s.GetService<IOptions<ConfidentialClientApplicationOptions>>();
 
-            var app = ConfidentialClientApplicationBuilder
-                .CreateWithApplicationOptions(options.Value)
-                .WithCertificate(certificate)
-                .Build();
+                var appBuilder = ConfidentialClientApplicationBuilder
+                    .CreateWithApplicationOptions(options.Value);
 
-            services.AddSingleton(app);
+                var certificateOptions = s.GetService<IOptions<CertificateOptions>>();
+                if (string.IsNullOrEmpty(options.Value.ClientSecret) && !string.IsNullOrEmpty(certificateOptions.Value?.Criteria))
+                {
+                    var certificateProvider = new CertificateProvider(certificateOptions.Value.StoreName, certificateOptions.Value.StoreLocation);
+                    var certificate = certificateProvider.FindCertificate(certificateOptions.Value.Criteria);
+                    appBuilder.WithCertificate(certificate);
+                }
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+                return appBuilder.Build();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app)
         {
-            if (env.IsDevelopment())
+            if (this.Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
-            else
-            {
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
 
             //app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseRouting();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }
