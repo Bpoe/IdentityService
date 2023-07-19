@@ -1,4 +1,4 @@
-namespace Identity.Models;
+namespace Identity;
 
 using System.Runtime.Serialization;
 

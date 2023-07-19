@@ -1,40 +1,36 @@
-﻿namespace Identity;
-
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using Microsoft.AspNetCore;
+﻿using Azure.Core;
+using Azure.Identity;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.WindowsServices;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Identity;
 
-public static class Program
+var builder = WebApplication
+    .CreateBuilder(args);
+
+builder.Services
+    .AddOptions()
+    .AddWindowsService()
+    .AddSingleton<TokenCredential>(new ClientSecretCredential(
+        builder.Configuration["TenantId"],
+        builder.Configuration["ClientId"],
+        builder.Configuration["ClientSecret"]))
+    .AddTransient<TokenService>();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
 {
-    public static void Main(string[] args)
-    {
-        var isService = !(Debugger.IsAttached || args.Contains("--console"));
-
-        if (isService)
-        {
-            var pathToExe = Process.GetCurrentProcess().MainModule.FileName;
-            var pathToContentRoot = Path.GetDirectoryName(pathToExe);
-            Directory.SetCurrentDirectory(pathToContentRoot);
-        }
-
-        var builder = WebHost
-            .CreateDefaultBuilder(
-                args.Where(arg => arg != "--console").ToArray())
-            .UseStartup<Startup>();
-
-        using var host = builder.Build();
-        
-        if (isService)
-        {
-            host.RunAsService();
-        }
-        else
-        {
-            host.Run();
-        }
-    }
+    app.UseDeveloperExceptionPage();
 }
+
+app.UseRouting();
+
+app.MapGet(
+    "metadata/identity/oauth2/token",
+    async ([FromQuery(Name = "resource")] string resource, [FromServices] TokenService tokenService)
+        => await tokenService.Token(resource));
+
+await app.RunAsync();
