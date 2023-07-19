@@ -29,7 +29,7 @@ public class TokenService
         var accessToken = await tokenCredential.GetTokenAsync(request, CancellationToken.None);
 
         var jwt = new JwtSecurityToken(accessToken.Token);
-        var oid = jwt.Claims.First(c => c.Type == "oid")?.Value;
+        var oid = jwt.Claims.First(c => c.Type == "oid")?.Value ?? string.Empty;
 
         return new TokenResponse
         {
