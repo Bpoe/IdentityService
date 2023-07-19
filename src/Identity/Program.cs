@@ -1,6 +1,4 @@
-﻿using Azure.Core;
-using Azure.Identity;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -13,11 +11,8 @@ var builder = WebApplication
 builder.Services
     .AddOptions()
     .AddWindowsService()
-    .AddSingleton<TokenCredential>(new ClientSecretCredential(
-        builder.Configuration["TenantId"],
-        builder.Configuration["ClientId"],
-        builder.Configuration["ClientSecret"]))
-    .AddTransient<TokenService>();
+    .AddTransient<TokenService>()
+    .AddTokenCredentialFromConfiguration(builder.Configuration);
 
 var app = builder.Build();
 
@@ -34,3 +29,4 @@ app.MapGet(
         => await tokenService.Token(resource));
 
 await app.RunAsync();
+
