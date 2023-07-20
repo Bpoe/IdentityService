@@ -1,0 +1,75 @@
+openapi: 3.0.0
+info:
+  title: A service to retrieve tokens for a specific service principle
+  version: 0.0.1
+
+servers:
+- url: http://{host}
+  variables:
+    host:
+      default: "127.0.0.1:50342"
+
+paths:
+  /metadata/identity/oauth2/token/:
+    get:
+      summary: Get a token
+      parameters:
+      - name: resource
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: contextResource
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenResponse"
+
+  /oauth2/token/:
+    get:
+      summary: Get a token
+      parameters:
+      - name: resource
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: contextResource
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenResponse"
+
+components:
+  schemas:
+    tokenResponse:
+      type: object
+      properties:
+        access_token: 
+          type: string
+        client_id:
+          type: string
+        expires_in:
+          type: string
+        expires_on:
+          type: string
+        not_before:
+          type: string
+        resource:
+          type: string
+        token_type:
+          type: string
