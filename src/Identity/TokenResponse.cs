@@ -4,7 +4,6 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Runtime.Serialization;
-using Azure.Core;
 
 [DataContract]
 public class TokenResponse
@@ -34,23 +33,6 @@ public class TokenResponse
     [DataMember(Name = "token_type", IsRequired = false)]
     public string TokenType { get; set; } = string.Empty;
 
-    public static TokenResponse FromAccessToken(AccessToken accessToken)
-    {
-        var jwt = new JwtSecurityToken(accessToken.Token);
-        var oid = jwt.Claims.First(c => c.Type == "oid")?.Value ?? string.Empty;
-
-        return new TokenResponse
-        {
-            AccessToken = accessToken.Token,
-            TokenType = BearerTokenType,
-            ExpiresOn = ToSecondsString(accessToken.ExpiresOn - Epoch),
-            ExpiresIn = ToSecondsString(accessToken.ExpiresOn - DateTime.UtcNow),
-            NotBefore = ToSecondsString(DateTime.UtcNow - Epoch),
-            Resource = jwt?.Audiences?.FirstOrDefault() ?? string.Empty,
-            ClientId = oid,
-        };
-    }
-
     public static TokenResponse FromString(string accessToken)
     {
         var jwt = new JwtSecurityToken(accessToken);
@@ -61,8 +43,8 @@ public class TokenResponse
             AccessToken = accessToken,
             TokenType = BearerTokenType,
             ExpiresOn = ToSecondsString(jwt.ValidTo - Epoch),
-            ExpiresIn = ToSecondsString(jwt.ValidTo - DateTime.UtcNow),
-            NotBefore = ToSecondsString(DateTime.UtcNow - Epoch),
+            ExpiresIn = ToSecondsString(jwt.ValidTo - jwt.ValidFrom),
+            NotBefore = ToSecondsString(jwt.ValidFrom - Epoch),
             Resource = jwt?.Audiences?.FirstOrDefault() ?? string.Empty,
             ClientId = oid,
         };

@@ -9,6 +9,8 @@ using Microsoft.Extensions.Caching.Distributed;
 public class TokenService
 {
     private const string DefaultForScope = "/.default";
+    
+    private static readonly TimeSpan CacheBuffer = TimeSpan.FromMinutes(10);
 
     private readonly TokenCredentialOptions options;
     private readonly TenantIdResolver tenantIdResolver;
@@ -31,10 +33,7 @@ public class TokenService
         }
 
         // Ensure that we have a TenantId
-        if (string.IsNullOrEmpty(requestOptions.TenantId))
-        {
-            throw new ArgumentException("tenantId cannot be null or emtpty", nameof(requestOptions.TenantId));
-        }
+        ArgumentException.ThrowIfNullOrEmpty(requestOptions.TenantId, nameof(requestOptions.TenantId));
 
         // Check for cached access token
         var key = $"{requestOptions.TenantId.ToLowerInvariant()}_{resource.ToLowerInvariant()}";
@@ -50,8 +49,14 @@ public class TokenService
         var accessToken = await credential.GetTokenAsync(context, CancellationToken.None);
 
         // Add token to cache
-        await this.cache.SetStringAsync(key, accessToken.Token, new DistributedCacheEntryOptions { AbsoluteExpiration = accessToken.ExpiresOn - TimeSpan.FromMinutes(10) });
+        await this.cache.SetStringAsync(
+           key,
+           accessToken.Token,
+           new DistributedCacheEntryOptions
+           {
+               AbsoluteExpiration = accessToken.ExpiresOn - CacheBuffer,
+           });
 
-        return TokenResponse.FromAccessToken(accessToken);
+        return TokenResponse.FromString(accessToken.Token);
     }
 }
