@@ -19,7 +19,7 @@ paths:
         required: true
         schema:
           type: string
-      - name: contextResource
+      - name: challengeResource
         in: query
         required: false
         schema:
@@ -41,7 +41,7 @@ paths:
         required: true
         schema:
           type: string
-      - name: contextResource
+      - name: challengeResource
         in: query
         required: false
         schema:
