@@ -11,6 +11,7 @@ var builder = WebApplication
 
 builder.Services
     .AddOptions()
+    .AddDistributedMemoryCache()
     .AddWindowsService()
     .AddTransient<TokenService>()
     .AddSingleton(builder.Configuration.Get<TokenCredentialOptions>() ?? new TokenCredentialOptions())

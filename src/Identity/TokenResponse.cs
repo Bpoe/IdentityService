@@ -51,6 +51,23 @@ public class TokenResponse
         };
     }
 
+    public static TokenResponse FromString(string accessToken)
+    {
+        var jwt = new JwtSecurityToken(accessToken);
+        var oid = jwt.Claims.First(c => c.Type == "oid")?.Value ?? string.Empty;
+
+        return new TokenResponse
+        {
+            AccessToken = accessToken,
+            TokenType = BearerTokenType,
+            ExpiresOn = ToSecondsString(jwt.ValidTo - Epoch),
+            ExpiresIn = ToSecondsString(jwt.ValidTo - DateTime.UtcNow),
+            NotBefore = ToSecondsString(DateTime.UtcNow - Epoch),
+            Resource = jwt?.Audiences?.FirstOrDefault() ?? string.Empty,
+            ClientId = oid,
+        };
+    }
+
     private static string ToSecondsString(TimeSpan timeSpan)
         => ((long)timeSpan.TotalSeconds).ToString();
 }
