@@ -23,13 +23,13 @@ public class TokenService
         this.cache = cache ?? throw new ArgumentNullException(nameof(cache));
     }
 
-    public async Task<TokenResponse> GetTokenAsync(string resource, string? contextResource = default)
+    public async Task<TokenResponse> GetTokenAsync(string resource, string? challengeResource = default)
     {
         var requestOptions = this.options.Clone();
 
-        if (!string.IsNullOrEmpty(contextResource))
+        if (!string.IsNullOrEmpty(challengeResource))
         {
-            requestOptions.TenantId = await this.tenantIdResolver.Resolve(contextResource);
+            requestOptions.TenantId = await this.tenantIdResolver.Resolve(challengeResource);
         }
 
         // Ensure that we have a TenantId

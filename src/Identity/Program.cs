@@ -28,12 +28,12 @@ app.UseRouting();
 
 app.MapGet(
     "metadata/identity/oauth2/token",
-    async ([FromQuery(Name = "resource")] string resource, [FromQuery(Name = "contextResource")] string? contextResource, [FromServices] TokenService applicationTokenService)
-        => await applicationTokenService.GetTokenAsync(resource, contextResource));
+    async ([FromQuery(Name = "resource")] string resource, [FromQuery(Name = "challengeResource")] string? challengeResource, [FromServices] TokenService applicationTokenService)
+        => await applicationTokenService.GetTokenAsync(resource, challengeResource));
 
 app.MapGet(
     "oauth2/token",
-    async ([FromQuery(Name = "resource")] string resource, [FromQuery(Name = "contextResource")] string? contextResource, [FromServices] TokenService applicationTokenService)
-        => await applicationTokenService.GetTokenAsync(resource, contextResource));
+    async ([FromQuery(Name = "resource")] string resource, [FromQuery(Name = "challengeResource")] string? challengeResource, [FromServices] TokenService applicationTokenService)
+        => await applicationTokenService.GetTokenAsync(resource, challengeResource));
 
 await app.RunAsync();
