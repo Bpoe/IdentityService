@@ -22,3 +22,11 @@ irm "http://127.0.0.1:50342/metadata/identity/oauth2/token?resource=https%3A%2F%
 ```
 
 In addition to the `/metadata/identity/oauth2/token` endpoint, I have also added a shorter `/oauth2/token` endpoint if you do not need full IMDS compatibility.
+
+# Setup as a Service
+
+On Windows, you can easily set this up as a Windows Service:
+
+``` cmd
+sc.exe create "IndentityService" binpath="C:\path\to\file\Identity.exe"
+```
