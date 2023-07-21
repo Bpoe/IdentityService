@@ -11,11 +11,21 @@ var builder = WebApplication
 
 builder.Services
     .AddOptions()
-    .AddDistributedMemoryCache()
     .AddWindowsService()
     .AddTransient<TokenService>()
     .AddSingleton(builder.Configuration.Get<TokenCredentialOptions>() ?? new TokenCredentialOptions())
     .AddHttpClient<TenantIdResolver>();
+
+// Add appropriate cache
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redisConnectionString);
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+}
 
 var app = builder.Build();
 

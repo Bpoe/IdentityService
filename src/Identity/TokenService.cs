@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 
 public class TokenService
 {
@@ -15,12 +16,14 @@ public class TokenService
     private readonly TokenCredentialOptions options;
     private readonly TenantIdResolver tenantIdResolver;
     private readonly IDistributedCache cache;
+    private readonly ILogger<TokenService> logger;
 
-    public TokenService(TokenCredentialOptions options, TenantIdResolver tenantIdResolver, IDistributedCache cache)
+    public TokenService(TokenCredentialOptions options, TenantIdResolver tenantIdResolver, IDistributedCache cache, ILogger<TokenService> logger)
     {
         this.options = options ?? throw new ArgumentNullException(nameof(options));
         this.tenantIdResolver = tenantIdResolver ?? throw new ArgumentNullException(nameof(tenantIdResolver));
         this.cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        this.logger = logger;
     }
 
     public async Task<TokenResponse> GetTokenAsync(string resource, string? challengeResource = default)
@@ -29,6 +32,7 @@ public class TokenService
 
         if (!string.IsNullOrEmpty(challengeResource))
         {
+            this.logger?.LogDebug("Attempting to resolve tenantId using challenge resource {resource}", challengeResource);
             requestOptions.TenantId = await this.tenantIdResolver.Resolve(challengeResource);
         }
 
@@ -40,15 +44,18 @@ public class TokenService
         var cached = await this.cache.GetStringAsync(key);
         if (cached != null)
         {
+            this.logger?.LogDebug("Found cached access token.");
             return TokenResponse.FromString(cached);
         }
 
+        this.logger?.LogDebug("Retrieving new access token.");
         var credential = TokenCredentialFactory.GetTokenCredential(requestOptions);
 
         var context = new TokenRequestContext(new[] { resource + DefaultForScope });
         var accessToken = await credential.GetTokenAsync(context, CancellationToken.None);
 
         // Add token to cache
+        this.logger?.LogDebug("Adding access token to cache.");
         await this.cache.SetStringAsync(
            key,
            accessToken.Token,
