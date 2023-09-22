@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Identity;
+using System.Threading;
 
 var builder = WebApplication
     .CreateBuilder(args);
@@ -38,12 +39,20 @@ app.UseRouting();
 
 app.MapGet(
     "metadata/identity/oauth2/token",
-    async ([FromQuery(Name = "resource")] string resource, [FromQuery(Name = "challengeResource")] string? challengeResource, [FromServices] TokenService applicationTokenService)
-        => await applicationTokenService.GetTokenAsync(resource, challengeResource));
+    async (
+        [FromQuery(Name = "resource")] string resource,
+        [FromQuery(Name = "challengeResource")] string? challengeResource,
+        [FromServices] TokenService applicationTokenService,
+        CancellationToken cancellationToken)
+        => await applicationTokenService.GetTokenAsync(resource, challengeResource, cancellationToken));
 
 app.MapGet(
     "oauth2/token",
-    async ([FromQuery(Name = "resource")] string resource, [FromQuery(Name = "challengeResource")] string? challengeResource, [FromServices] TokenService applicationTokenService)
-        => await applicationTokenService.GetTokenAsync(resource, challengeResource));
+    async (
+        [FromQuery(Name = "resource")] string resource,
+        [FromQuery(Name = "challengeResource")] string? challengeResource,
+        [FromServices] TokenService applicationTokenService,
+        CancellationToken cancellationToken)
+        => await applicationTokenService.GetTokenAsync(resource, challengeResource, cancellationToken));
 
 await app.RunAsync();

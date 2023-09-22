@@ -26,14 +26,14 @@ public class TokenService
         this.logger = logger;
     }
 
-    public async Task<TokenResponse> GetTokenAsync(string resource, string? challengeResource = default)
+    public async Task<TokenResponse> GetTokenAsync(string resource, string? challengeResource = default, CancellationToken cancellationToken = default)
     {
         var requestOptions = this.options.Clone();
 
         if (!string.IsNullOrEmpty(challengeResource))
         {
             this.logger?.LogDebug("Attempting to resolve tenantId using challenge resource {resource}", challengeResource);
-            requestOptions.TenantId = await this.tenantIdResolver.Resolve(challengeResource);
+            requestOptions.TenantId = await this.tenantIdResolver.Resolve(challengeResource, cancellationToken);
         }
 
         // Ensure that we have a TenantId
@@ -41,7 +41,7 @@ public class TokenService
 
         // Check for cached access token
         var key = $"{requestOptions.TenantId.ToLowerInvariant()}_{resource.ToLowerInvariant()}";
-        var cached = await this.GetCachedStringAsync(key);
+        var cached = await this.GetCachedStringAsync(key, cancellationToken);
         if (cached is not null)
         {
             this.logger?.LogDebug("Found cached access token.");
@@ -49,22 +49,22 @@ public class TokenService
         }
 
         this.logger?.LogDebug("Retrieving new access token.");
-        var credential = TokenCredentialFactory.GetTokenCredential(requestOptions);
+        var credential = await TokenCredentialFactory.GetTokenCredential(requestOptions, cancellationToken);
 
         var context = new TokenRequestContext(new[] { resource + DefaultForScope });
-        var accessToken = await credential.GetTokenAsync(context, CancellationToken.None);
+        var accessToken = await credential.GetTokenAsync(context, cancellationToken);
 
         // Add token to cache
-        await this.SetCachedAccessTokenAsync(key, accessToken);
+        await this.SetCachedAccessTokenAsync(key, accessToken, cancellationToken);
 
         return TokenResponse.FromString(accessToken.Token);
     }
 
-    public async Task<string?> GetCachedStringAsync(string key)
+    public async Task<string?> GetCachedStringAsync(string key, CancellationToken cancellationToken = default)
     {
         try
         {
-            return await this.cache.GetStringAsync(key);
+            return await this.cache.GetStringAsync(key, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -75,7 +75,7 @@ public class TokenService
         }
     }
 
-    public async Task SetCachedAccessTokenAsync(string key, AccessToken accessToken)
+    public async Task SetCachedAccessTokenAsync(string key, AccessToken accessToken, CancellationToken cancellationToken = default)
     {
         this.logger?.LogDebug("Adding access token to cache.");
 
@@ -87,7 +87,8 @@ public class TokenService
                new DistributedCacheEntryOptions
                {
                    AbsoluteExpiration = accessToken.ExpiresOn - CacheBuffer,
-               });
+               },
+               cancellationToken);
         }
         catch (Exception ex)
         {

@@ -1,12 +1,14 @@
 ﻿namespace Identity;
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
 
 public static class TokenCredentialFactory
 {
-    public static TokenCredential GetTokenCredential(TokenCredentialOptions options)
+    public static async Task<TokenCredential> GetTokenCredential(TokenCredentialOptions options, CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrWhiteSpace(options.CertificateSubject))
         {
@@ -19,7 +21,7 @@ public static class TokenCredentialFactory
             return new ClientCertificateCredential(
                     options.TenantId,
                     options.ClientId,
-                    certProvider.GetCertificateAsync().Result);
+                    await certProvider.GetCertificateAsync(cancellationToken));
         }
 
         if (!string.IsNullOrWhiteSpace(options.CertificatePath))
