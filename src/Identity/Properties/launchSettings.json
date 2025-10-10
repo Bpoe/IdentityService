@@ -4,7 +4,7 @@
     "Identity": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "metadata/identity/oauth2/token?resource=https://management.azure.com",
+      "launchUrl": "https://localhost:5001/metadata/identity/oauth2/token?resource=https://management.azure.com",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
