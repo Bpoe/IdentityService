@@ -9,9 +9,6 @@ public static class TokenCredentialFactory
 {
     public static async Task<TokenCredential> GetTokenCredential(IdentityOptions options)
     {
-        ArgumentException.ThrowIfNullOrEmpty(options.TenantId, nameof(options.TenantId));
-        ArgumentException.ThrowIfNullOrEmpty(options.ClientId, nameof(options.ClientId));
-
         // EnvironmentCredential does support Certificates in the Windows Certificate Store
         if (!string.IsNullOrWhiteSpace(options.CertificateSubject)
             && options.CertificateStoreName.HasValue
@@ -41,6 +38,6 @@ public static class TokenCredentialFactory
         Environment.SetEnvironmentVariable("AZURE_CLIENT_SEND_CERTIFICATE_CHAIN", options.SendCertificateChain.ToString());
         Environment.SetEnvironmentVariable("AZURE_AUTHORITY_HOST", options.AuthorityHost?.ToString());
 
-        return new EnvironmentCredential();
+        return new DefaultAzureCredential(new DefaultAzureCredentialOptions { ExcludeManagedIdentityCredential = true });
     }
 }

@@ -15,10 +15,8 @@ builder.Services
     .AddOptions()
     .AddWindowsService()
     .AddTransient<TokenService>()
-    //.AddSingleton<TokenCredential>(TokenCredentialFactory.GetTokenCredential(
-    //    builder.Configuration.Get<IdentityOptions>() ?? new IdentityOptions()))
     .AddSingleton(builder.Configuration.Get<IdentityOptions>() ?? new IdentityOptions())
-    .AddSingleton<TokenCredential>(new DefaultAzureCredential(new DefaultAzureCredentialOptions { ExcludeManagedIdentityCredential = true }))
+    .AddSingleton(sp => TokenCredentialFactory.GetTokenCredential(sp.GetRequiredService<IdentityOptions>()).Result)
     .AddDistributedMemoryCache();
 
 var app = builder.Build();
