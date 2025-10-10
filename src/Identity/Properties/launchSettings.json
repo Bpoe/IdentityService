@@ -5,6 +5,7 @@
       "commandName": "Project",
       "launchBrowser": true,
       "launchUrl": "metadata/identity/oauth2/token",
+      "applicationUrl": "http://localhost:5000;https://localhost:5001",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

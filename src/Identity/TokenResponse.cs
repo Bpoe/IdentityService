@@ -4,6 +4,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 [DataContract]
 public class TokenResponse
@@ -12,25 +13,25 @@ public class TokenResponse
 
     private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-    [DataMember(Name = "access_token", IsRequired = false)]
+    [JsonPropertyName("access_token")]
     public string AccessToken { get; set; } = string.Empty;
 
-    [DataMember(Name = "client_id", IsRequired = false)]
+    [JsonPropertyName("client_id")]
     public string ClientId { get; set; } = string.Empty;
 
-    [DataMember(Name = "expires_in", IsRequired = false)]
+    [JsonPropertyName("expires_in")]
     public string ExpiresIn { get; set; } = string.Empty;
 
-    [DataMember(Name = "expires_on", IsRequired = false)]
+    [JsonPropertyName("expires_on")]
     public string ExpiresOn { get; set; } = string.Empty;
 
-    [DataMember(Name = "not_before", IsRequired = false)]
+    [JsonPropertyName("not_before")]
     public string NotBefore { get; set; } = string.Empty;
 
-    [DataMember(Name = "resource", IsRequired = false)]
+    [JsonPropertyName("resource")]
     public string Resource { get; set; } = string.Empty;
 
-    [DataMember(Name = "token_type", IsRequired = false)]
+    [JsonPropertyName("token_type")]
     public string TokenType { get; set; } = string.Empty;
 
     public static TokenResponse FromString(string accessToken)
